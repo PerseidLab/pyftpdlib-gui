@@ -43,7 +43,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: "Linux Portable FTP Server ${{ steps.version.outputs.tag }}"
+          name: "pyftpdlib-gui ${{ steps.version.outputs.tag }}"
           body: "Automated standalone Linux build compiled via GitHub Actions."
           files: dist/pyftpdlib-gui
         env:
