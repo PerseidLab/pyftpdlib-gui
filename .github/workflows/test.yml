@@ -52,7 +52,8 @@ jobs:
     steps:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
-        path: all-artifacts
+        with:
+          path: all-artifacts
 
       - name: Generate Auto Version Tag
         id: version
