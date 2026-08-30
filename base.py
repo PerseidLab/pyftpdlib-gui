@@ -7,7 +7,6 @@ import tempfile
 import shutil
 import socket
 
-# Configure local directory to store dependencies
 LOCAL_LIB = os.path.join(os.getcwd(), ".ftp_libs")
 sys.path.insert(0, LOCAL_LIB)
 
@@ -75,15 +74,12 @@ class FTPServerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Python Tkinter FTP Server")
-        self.root.geometry("550x530")
+        self.root.geometry("550x570")
         self.root.resizable(False, False)
 
         self.server = None
         self.server_thread = None
 
-        # --- Layout Components ---
-
-        # IP Address Display Frame
         ip_frame = tk.LabelFrame(root, text=" Network / IP Address(es) ", padx=10, pady=8)
         ip_frame.pack(fill="x", padx=15, pady=(10, 0))
 
@@ -93,7 +89,6 @@ class FTPServerApp:
         self.ip_label = tk.Label(ip_frame, text=f"Available IPs: {ip_text}", fg="blue", font=("Bold", 10))
         self.ip_label.pack(anchor="w")
 
-        # Directory Selection
         tk.Label(root, text="Shared Directory:").pack(anchor="w", padx=15, pady=(10, 0))
         dir_frame = tk.Frame(root)
         dir_frame.pack(fill="x", padx=15, pady=5)
@@ -104,8 +99,7 @@ class FTPServerApp:
 
         tk.Button(dir_frame, text="Browse", command=self.browse_directory).pack(side="left")
 
-        # Credentials Settings
-        cred_frame = tk.LabelFrame(root, text=" Server Credentials & Port ", padx=10, pady=10)
+        cred_frame = tk.LabelFrame(root, text=" Server Credentials, Port & Permissions ", padx=10, pady=10)
         cred_frame.pack(fill="x", padx=15, pady=10)
 
         tk.Label(cred_frame, text="Port:").grid(row=0, column=0, sticky="w", pady=2)
@@ -123,12 +117,14 @@ class FTPServerApp:
         self.pass_entry.grid(row=2, column=1, sticky="w", pady=2)
         self.pass_entry.insert(0, "12345")
 
-        # Show/Hide Password Checkbutton
         self.show_pass_var = tk.IntVar()
         self.show_pass_chk = tk.Checkbutton(cred_frame, text="Show", variable=self.show_pass_var, command=self.toggle_password)
         self.show_pass_chk.grid(row=2, column=2, sticky="w", padx=(5, 0))
 
-        # Control Buttons
+        self.readonly_var = tk.IntVar()
+        self.readonly_chk = tk.Checkbutton(cred_frame, text="Read-Only", variable=self.readonly_var)
+        self.readonly_chk.grid(row=3, column=0, columnspan=3, sticky="w", pady=(8, 0))
+
         btn_frame = tk.Frame(root)
         btn_frame.pack(fill="x", padx=15, pady=5)
 
@@ -138,7 +134,6 @@ class FTPServerApp:
         self.stop_btn = tk.Button(btn_frame, text="Stop Server", bg="red", fg="white", font=("Bold", 10), state="disabled", command=self.stop_server)
         self.stop_btn.pack(side="right", expand=True, fill="x", padx=(5, 0))
 
-        # Live Log Display
         tk.Label(root, text="Server Activity Log:").pack(anchor="w", padx=15, pady=(5, 0))
         self.log_area = scrolledtext.ScrolledText(root, height=7, state="disabled", bg="#f4f4f4")
         self.log_area.pack(fill="both", padx=15, pady=(0, 15))
@@ -185,15 +180,19 @@ class FTPServerApp:
             port = int(self.port_entry.get())
             username = self.user_entry.get()
             password = self.pass_entry.get()
+            is_readonly = self.readonly_var.get() == 1
+
+            permissions = "elr" if is_readonly else "elradfmwMT"
 
             authorizer = DummyAuthorizer()
-            authorizer.add_user(username, password, path, perm="elradfmwMT")
+            authorizer.add_user(username, password, path, perm=permissions)
 
             handler = FTPHandler
             handler.authorizer = authorizer
 
+            mode_str = "Read-Only" if is_readonly else "Full Access (Read/Write)"
             self.server = FTPServer(("0.0.0.0", port), handler)
-            self.log_message(f"[*] Server started on port {port}, sharing: {path}")
+            self.log_message(f"[*] Server started on port {port} [{mode_str}], sharing: {path}")
             self.server.serve_forever()
         except Exception as e:
             self.log_message(f"[!] Error: {e}")
@@ -214,6 +213,7 @@ class FTPServerApp:
         self.user_entry.config(state="disabled")
         self.pass_entry.config(state="disabled")
         self.show_pass_chk.config(state="disabled")
+        self.readonly_chk.config(state="disabled")
 
     def stop_server(self):
         if self.server:
@@ -228,8 +228,10 @@ class FTPServerApp:
         self.user_entry.config(state="normal")
         self.pass_entry.config(state="normal")
         self.show_pass_chk.config(state="normal")
+        self.readonly_chk.config(state="normal")
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = FTPServerApp(root)
     root.mainloop()
+
