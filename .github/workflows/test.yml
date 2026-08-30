@@ -15,9 +15,9 @@ jobs:
       matrix:
         include:
           - os: ubuntu-22.04
-            target_name: pyftpdlib-gui-linux
+            target_name: pyftpdlib-gui-linux-x64
           - os: windows-latest
-            target_name: pyftpdlib-gui.exe
+            target_name: pyftpdlib-gui-win-x64.exe
 
     steps:
       - name: Checkout Repository
@@ -31,7 +31,7 @@ jobs:
       - name: Install Dependencies & PyInstaller
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller pyftpdlib pyasyncore pyasynchat
+          pip install pyinstaller pyftpdlib pyasyncore pyasynchat qrcode
 
       - name: Compile Standalone Binary
         run: |
@@ -68,9 +68,9 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: "pyftpdlib-gui ${{ steps.version.outputs.tag }}"
-          body: "Automated multi-platform standalone builds (Linux & Windows) compiled via GitHub Actions."
+          body: "Automated multi-platform standalone builds (Linux x64 & Windows x64) compiled via GitHub Actions."
           files: |
-            all-artifacts/binary-pyftpdlib-gui-linux/pyftpdlib-gui-linux
-            all-artifacts/binary-pyftpdlib-gui.exe/pyftpdlib-gui.exe
+            all-artifacts/binary-pyftpdlib-gui-linux-x64/pyftpdlib-gui-linux-x64
+            all-artifacts/binary-pyftpdlib-gui-win-x64.exe/pyftpdlib-gui-win-x64.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
