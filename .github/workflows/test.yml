@@ -1,4 +1,4 @@
-name: Build and Release Standalone Linux Binary
+name: Build and Release Binaries
 
 on:
   push:
@@ -8,10 +8,16 @@ on:
       - '**.md'
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target_name: pyftpdlib-gui-linux
+          - os: windows-latest
+            target_name: pyftpdlib-gui.exe
 
     steps:
       - name: Checkout Repository
@@ -29,7 +35,24 @@ jobs:
 
       - name: Compile Standalone Binary
         run: |
-          pyinstaller --noconsole --onefile --name pyftpdlib-gui base.py
+          pyinstaller --noconsole --onefile --name ${{ matrix.target_name }} base.py
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.target_name }}
+          path: dist/${{ matrix.target_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        path: all-artifacts
 
       - name: Generate Auto Version Tag
         id: version
@@ -39,12 +62,14 @@ jobs:
           VERSION="v${DATE_TAG}.${RUN_NUM}"
           echo "tag=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release and Upload Binary
+      - name: Create GitHub Release and Upload Binaries
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: "pyftpdlib-gui ${{ steps.version.outputs.tag }}"
-          body: "Automated standalone Linux build compiled via GitHub Actions."
-          files: dist/pyftpdlib-gui
+          body: "Automated multi-platform standalone builds (Linux & Windows) compiled via GitHub Actions."
+          files: |
+            all-artifacts/binary-pyftpdlib-gui-linux/pyftpdlib-gui-linux
+            all-artifacts/binary-pyftpdlib-gui.exe/pyftpdlib-gui.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
