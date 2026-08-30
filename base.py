@@ -73,7 +73,7 @@ from pyftpdlib.servers import FTPServer
 class FTPServerApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Python Tkinter FTP Server")
+        self.root.title("FTP Server pyftpdlib")
         self.root.geometry("550x570")
         self.root.resizable(False, False)
 
